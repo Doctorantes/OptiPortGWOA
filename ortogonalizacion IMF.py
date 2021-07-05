@@ -4,43 +4,14 @@ Created on Mon May 16 00:27:50 2016
 @author: Hossam Faris
 """
 import random
-import numpy
+import pandas as pd
+import numpy as np
 import math
+from PyEMD import EMD
 #from solution import solution
 import time
 
-def GWO(objf, lb, ub, dim, SearchAgents_no, Max_iter):
-
-    # Max_iter=1000
-    # lb=-100
-    # ub=100
-    # dim=30
-    # SearchAgents_no=5
-
-    # initialize alpha, beta, and delta_pos
-    Alpha_pos = numpy.zeros(dim)
-    Alpha_score = float("inf")
-
-    Beta_pos = numpy.zeros(dim)
-    Beta_score = float("inf")
-
-    Delta_pos = numpy.zeros(dim)
-    Delta_score = float("inf")
-
-    if not isinstance(lb, list):
-        lb = [lb] * dim
-    if not isinstance(ub, list):
-        ub = [ub] * dim
-
-    # Initialize the positions of search agents
-    Positions = numpy.zeros((SearchAgents_no, dim))
-    for i in range(dim):
-        Positions[:, i] = (
-            numpy.random.uniform(0, 1, SearchAgents_no) * (ub[i] - lb[i]) + lb[i]
-        )
-
-    Convergence_curve = numpy.zeros(Max_iter)
-    class solution:
+class solution:
      def __init__(self):
         self.best = 0
         self.bestIndividual = []
@@ -55,6 +26,38 @@ def GWO(objf, lb, ub, dim, SearchAgents_no, Max_iter):
         self.dim = 0
         self.popnum = 0
         self.maxiers = 0
+
+def GWO(objf, lb, ub, dim, SearchAgents_no, Max_iter):
+
+    # Max_iter=1000
+    # lb=-100
+    # ub=100
+    # dim=30
+    # SearchAgents_no=5
+
+    # initialize alpha, beta, and delta_pos
+    Alpha_pos = np.zeros(dim)
+    Alpha_score = float("inf")
+
+    Beta_pos = np.zeros(dim)
+    Beta_score = float("inf")
+
+    Delta_pos = np.zeros(dim)
+    Delta_score = float("inf")
+
+    if not isinstance(lb, list):
+        lb = [lb] * dim
+    if not isinstance(ub, list):
+        ub = [ub] * dim
+
+    # Initialize the positions of search agents
+    Positions = np.zeros((SearchAgents_no, dim))
+    for i in range(dim):
+        Positions[:, i] = (
+            np.random.uniform(0, 1, SearchAgents_no) * (ub[i] - lb[i]) + lb[i]
+        )
+
+    Convergence_curve = np.zeros(Max_iter)
 
     s = solution()
     #print(s)
@@ -82,12 +85,12 @@ def GWO(objf, lb, ub, dim, SearchAgents_no, Max_iter):
 
             # Return back the search agents that go beyond the boundaries of the search space
             for j in range(dim):
-                Positions[i, j] = numpy.clip(Positions[i, j], lb[j], ub[j])
+                Positions[i, j] = np.clip(Positions[i, j], lb[j], ub[j])
 
             # Calculate objective function for each search agent
             fitness = objf(Positions[i, :])
-            print(Positions[i, :])
-            print(fitness)
+            #print(Positions[i, :])
+            #print(fitness)
             # Update Alpha, Beta, and Delta
             if fitness < Alpha_score:
                 Delta_score = Beta_score  # Update delte
@@ -197,8 +200,9 @@ def Ufun(x, a, k, m):
     return y
 #####################################
 def F1(x):
-    s = numpy.sum(x ** 2)
-    return s
+	y=np.ones(len(x))*5
+	s = np.sum((x-y) ** 2)
+	return s
 
 def F2(x):
     o = sum(abs(x)) + prod(abs(x))
@@ -526,5 +530,74 @@ def F23(L):
         "F23": ["F23", 0, 10, 4],
     }"""    
 #GWO(objf, lb, ub, dim, SearchAgents_no, Max_iter)
-R=GWO(F3, -100, 100, 30, 50, 1000)
+
+####################################################3
+
+path='/home/angel/Desktop/Datos/sp500-1day/'
+
+simbolos= pd.read_csv(path+"sp500_symbols.csv")
+simbolos=simbolos['symbol']
+
+activo=0
+df=np.array(pd.read_csv(path+str(simbolos[activo])+".csv")["close"])
+n0=len(df)
+
+#print(n0)
+
+emd = EMD()
+IMFs = emd(df)
+
+
+residuo=IMFs[len(IMFs)-1]
+
+y=np.array(list(IMFs[0]))
+
+for i in range(1,len(IMFs)-1):
+	y=np.concatenate([y,IMFs[i]],axis=0)
+
+def corr():
+	r=0
+	for i in range(len(IMFs)):
+		for j in range(i+1,len(IMFs)):
+			r+=abs(np.corrcoef(IMFs[i],IMFs[j])[0][1])
+	print(r)
+
+def ortogonalidadconresiduo(x,n=n0):
+	r=0
+	cont=0
+	for k in range(n,len(x)+1,n):
+		#print(abs(np.corrcoef(x[k-n:k],residuo)[0][1]))
+		r+=abs(np.corrcoef(x[k-n:k],residuo)[0][1])
+		cont=cont+1
+	#print(cont)
+	return r
+
+def restriccionortogo(x,n=n0):
+	r=0
+	cont=0
+	for j in range(n,len(x)+1,n):
+		for k in range(n+j,len(x)+1,n):
+			r+=abs(np.corrcoef(x[j-n:j],x[k-n:k])[0][1])
+			cont=cont+1
+	#print(cont)
+	return r+ortogonalidadconresiduo(x)
+
+#print(len(IMFs))
+#print(restriccionortogo(y))
+#corr()			
+#print(y-1,y,y+1)
+
+def imfortogonal(x):
+	#print (x-y)
+	s = np.sum((x-y) ** 2)
+	#print(s)
+	s=s+0.2*restriccionortogo(x)
+	return s
+
+#print(imfortogonal(y-5))
+
+R=GWO(imfortogonal, list(y-1), list(y+1), len(y), 50, 1000)
 print(R)
+
+#R=GWO(F1, -5, 15, 30, 50, 1000)
+#print(R)
