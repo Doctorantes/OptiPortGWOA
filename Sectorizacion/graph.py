@@ -85,9 +85,6 @@ def vecinos(x):
 	#print(np.array(list(G.edges(data=True)))[:, 0][np.array(list(G.edges(data=True)))[:, 1]==x][1:])
 	pesos=np.array(list(G.edges(data=True)))[:, 2][banderas]
 	pesos=np.array(list( map(lambda x: abs(x['weight']), pesos) ))
-	#print(vecinos, pesos, len(vecinos),len(pesos))
-	#print(vecinos[pesos>0.95])
-	#print (pesos[pesos>0.95])
 	return(vecinos[pesos>0.95])
 #print(vecinos(simbolos[0]))
 
