@@ -17,39 +17,9 @@ import math
 from scipy.stats import skew
 import time
 
-#%%
-#Graficas de algunas series de tiempo
 
-data0=pd.read_csv('Data0.csv',header=0)
-data1=pd.read_csv('Data1.csv',header=0)
-data2=pd.read_csv('Data2.csv',header=0)
-print(data0)
-y0=data0['close']
-y1=data1['close']
-y2=data2['close']
-plt.plot(y0)
-plt.plot(y1)
-plt.plot(y2)
-fig,ax1=plt.subplots()
-ax2=ax1.twinx()
-#ax3=ax2.twinx()
-curve1, =ax1.plot(data0.index,y0,color='r')
-curve2, =ax2.plot(data1.index,y1,color='b')
-#curve3, =ax3.plot(data2.index,y2,color='y')
-#Graficas comparativas de dos series de tiempo
-#Util para identificar series que cointegren
-ax1.set_title("APPL, MSFT")     #titulo
-ax1.set_xlabel('Periodos(Diarios)')    #nombre del eje x
-ax1.set_ylabel('Precios de cierre(Diarios)')   #nombre del eje y
-#%%
-xpoints = numpy.array([0, 6])
-ypoints = numpy.array([0, 250])
-
-plt.plot(xpoints, ypoints)
-plt.show()
-
- 
-#%%
+t1=time.time()
+print(t1)
 #Esta funcion (VecP) calcula un vector que obtiene las gananciasdiarias
 #De haber invertido una distribucion diaria x
 #Y vender de acuerdo a la lista de precios p
@@ -88,20 +58,20 @@ def  ddtt(n):
     fi='Data'+str(i)+'.csv'
     
     datai=pd.read_csv(fi,header=0)
-    print(datai)
+    
     yi=datai['close']
-    plt.plot(yi)         
+          
     r[i]=len(yi)
 
  k=int(numpy.min(r))
- k=252
+ k=493
  
  h=numpy.zeros((n,k))
  for i in range(0,n):
     
     fi='Data'+str(i)+'.csv'
-    filenamei=fi
-    datai=pd.read_csv(filenamei,header=0)
+   
+    datai=pd.read_csv(fi,header=0)
     yi=datai['close']
     h[i,:]=yi[:k]
     
@@ -116,7 +86,7 @@ def  ddtt(n):
 def GWO(lb, ub, dim, SearchAgents_no,Max_iter,eta,ups,pA):
  
     MP=ddtt(dim)#Lammamos a la matriz de precios
-    
+    #MP=MP[:,]
     Alpha_pos = numpy.zeros(dim)
     Alpha_score = -float("inf")
 
@@ -167,7 +137,7 @@ def GWO(lb, ub, dim, SearchAgents_no,Max_iter,eta,ups,pA):
             eps=VecP(MP,Positions[i, :],pA)   
             
             fitness =eps.mean()
-            print('fitness',fitness)
+            
             vr=eps.var()-eta
             
             sk=skew(eps)-ups
@@ -251,10 +221,10 @@ def GWO(lb, ub, dim, SearchAgents_no,Max_iter,eta,ups,pA):
 
 #Testeo de la estrategia a partir del dia 253 con termino 
 #el dia 452
-dim=8
+dim=100
 hh=ddtt(dim)
-y=hh[:,251]
-sol=GWO(0.01, 1.0, dim, 30, 1000,0.08,0.001,y)
+y=hh[:,492]
+sol=GWO(0.01, 1.0, dim, 30, 100,0.08,0.001,y)
 print(sol)
 
 
@@ -281,12 +251,29 @@ def  ddtt2(n):
     
  return h
 
+
+
+
 BT=ddtt2(dim)
-BT1=BT[:,253:453]
-yBT=BT[:,453]
+BT0=BT[:,:493]
+yBT0=BT[:,492]
+
+epBT0=VecP(BT0,sol,yBT0)
+
+
+BT1=BT[:,493:510]
+yBT=BT[:,508]
 
 epBT=VecP(BT1,sol,yBT)
+#Esperanza, riesgo y oblicuidad calculados con la estrategia empleada
+print(epBT0.mean())
+print(epBT0.var())
+print(skew(epBT0))
 #Esperanza, riesgo y oblicuidad calculados con la estrategia empleada
 print(epBT.mean())
 print(epBT.var())
 print(skew(epBT))
+
+t2=time.time()
+
+print((t2-t1)/60)
