@@ -1,5 +1,5 @@
 #%%%  
-def singer(h, i, A):
+def scenarios(h, i, A):
     #We initialize two sets B and C
     # B is intended to store all possible volume settings for each song.
     # C tiene como finalidad ser un conjunto auxiliar que se reconstruye 
@@ -41,5 +41,5 @@ def singer(h, i, A):
     
     return max_vol
 
-print(singer(10, 1, [4,4,4,4]))
+print(scenarios(10, 1, [4,4,4,4]))
 #%%%
