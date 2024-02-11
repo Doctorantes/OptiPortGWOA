@@ -1,4 +1,6 @@
 #%%%  
+
+# Let me make some investigations
 def scenarios(h, i, A):
     #We initialize two sets B and C
     # B is intended to store all possible volume settings for each song.
